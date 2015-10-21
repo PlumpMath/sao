@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "sao_math.h"
 
@@ -18,6 +19,22 @@ main(int argc, char* argv[])
 
     V2 baz = add(foo, bar);
 
-    printf("(%f,%f) + (%f,%f) = (%f,%f)\n",
-           foo.x, foo.y, bar.x, bar.y, baz.x, baz.y);
+    assert(baz.x == foo.x + bar.x);
+    assert(baz.y == foo.y + bar.y);
+
+    V2 wow = sub(foo, bar);
+
+    assert(wow.x == foo.x - bar.x);
+    assert(wow.y == foo.y - bar.y);
+
+    V2 n = normalize(foo);
+
+    float mag = sqrt(n.x * n.x + n.y * n.y);
+    float eps = 0.0001;
+    assert(mag <= 1+eps && mag >= 1-eps);
+
+    V2 s = scale(foo, 2.0f);
+
+    assert(s.x == foo.x * 2);
+    assert(s.y == foo.y * 2);
 }

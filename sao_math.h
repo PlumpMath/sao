@@ -103,7 +103,7 @@ normalize_v2(V2 v)
 }
 
 static inline V2
-scale_v2_n(V2 v, float n)
+scale_v2(V2 v, float n)
 {
     v.x *= n;
     v.y *= n;
@@ -116,6 +116,20 @@ scale_v2_n(V2 v, float n)
 #define add(x, y) _Generic((x), \
     V2: _Generic((y), \
       V2: add_v2) \
+    )(x, y)
+
+#define sub(x, y) _Generic((x), \
+    V2: _Generic((y), \
+      V2: sub_v2) \
+    )(x, y)
+
+#define normalize(x) _Generic((x), \
+    V2: normalize_v2 \
+    )(x)
+
+#define scale(x, y) _Generic((x), \
+    V2: _Generic((y), \
+      float: scale_v2) \
     )(x, y)
 
 #endif
