@@ -40,6 +40,5 @@ main(int argc, char* argv[])
 
     add(v3(1,2,3), v3(1,2,3));
 
-     
     
 }

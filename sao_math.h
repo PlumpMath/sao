@@ -10,25 +10,29 @@
 
 #define PI 3.14159265358979323846
 
-typedef union _V2 {
+typedef union {
     struct {float x, y;};
     float e[2];
 } V2;
 
-typedef union _V3 {
+typedef union {
     struct {float x, y, z;};
     struct {float r, theta, phi;};
+    struct {V2 xy; float _z;};
     float e[3];
 } V3;
 
-typedef union _V4 {
+typedef union {
     struct {float x; float y; float z; float w;};
     struct {float r; float g; float b; float a;};
+    struct {V3 xyz; float _w;};
+    struct {V3 rgb; float _a;};
+    struct {V2 xy; V2 zw;};
     float e[4];
 } V4;
 
 // 4x4 matrix stored column major
-typedef union _Mat4 {
+typedef union {
     struct {V4 col1, col2, col3, col4;};
     V4 cols[4];
     float e[16];
@@ -36,6 +40,8 @@ typedef union _Mat4 {
 
 // Macros
 #define CLAMP(n, min, max) ((n<min)?(min):((n>max)?(max):(n)))
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
 
 // float
 static inline float
@@ -338,12 +344,13 @@ perspective(float field_of_view,
     float y_scale = cotan(to_rad(field_of_view / 2.0));
     float x_scale = y_scale / display_ratio;
     float frustrum_length = far_clip - near_clip;
+    float z_scale = -(far_clip + near_clip)/(frustrum_length);
 
     Mat4 result = mat4(
-        x_scale, 0,       0,                                              0,
-        0,       y_scale, 0,                                              0,
-        0,       0,      -(far_clip + near_clip)/(far_clip - near_clip),  -((2 * near_clip * far_clip)/frustrum_length),
-        0,       0,      -1,                                              0
+        x_scale, 0,       0,       0,
+        0,       y_scale, 0,       0,
+        0,       0,       z_scale,-((2 * near_clip * far_clip)/frustrum_length),
+        0,       0,      -1,       0
     );
     
     return result;
