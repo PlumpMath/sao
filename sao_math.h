@@ -342,8 +342,7 @@ perspective(float field_of_view,
     Mat4 result = mat4(
         x_scale, 0,       0,                                              0,
         0,       y_scale, 0,                                              0,
-        0,       0,      -(far_clip + near_clip)/(far_clip - near_clip),
-        -((2 * near_clip * far_clip) / frustrum_length),
+        0,       0,      -(far_clip + near_clip)/(far_clip - near_clip),  -((2 * near_clip * far_clip)/frustrum_length),
         0,       0,      -1,                                              0
     );
     
