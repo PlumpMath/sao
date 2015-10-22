@@ -1,4 +1,4 @@
-CFLAGS= -std=c11 -g -Wall
+CFLAGS= -std=c11 -g -Wall -Wno-missing-braces
 
 test: test_sao_math
 	./test_sao_math
