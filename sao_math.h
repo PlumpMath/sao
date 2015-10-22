@@ -111,25 +111,99 @@ scale_v2(V2 v, float n)
     return v;
 }
 
+// V3
+static inline V3
+v3(float x, float y, float z) {
+    V3 result;
+
+    result.x = x;
+    result.y = y;
+    result.z = z;
+
+    return result;
+}
+
+static inline V3
+add_v3(V3 a, V3 b)
+{
+    V3 result;
+
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    
+    return result;
+}
+
+static inline V3
+sub_v3(V3 a, V3 b)
+{
+    V3 result;
+
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
+    
+    return result;
+}
+
+static inline V3
+normalize_v3(V3 v)
+{
+    float magnitude = sqrt((v.x * v.x) + (v.y * v.y) + (v.z * v.z));
+    if (magnitude != 0) {
+        v.x = v.x / magnitude;
+        v.y = v.y / magnitude;
+        v.z = v.z / magnitude;
+    }
+    return v;
+}
+
+static inline V3
+scale_v3(V3 v, float n)
+{
+    V3 result;
+
+    result.x = n*v.x;
+    result.y = n*v.y;
+    result.z = n*v.z;
+    
+    return result;
+}
+
+static inline float
+dot(V3 a, V3 b)
+{
+    return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+static inline V3
+cross(V3 a, V3 b)
+{
+    V3 result;
+
+    result.x = a.y * b.z - a.z * b.y;
+    result.y = a.z * b.x - a.x * b.z;
+    result.z = a.x * b.y - a.y * b.x;
+
+    return result;
+}
+
 // Generic definitions.
-// @TODO, add, sub, normalize, scale
-#define add(x, y) _Generic((x), \
-    V2: _Generic((y), \
-      V2: add_v2) \
-    )(x, y)
+#define add(x, y) _Generic((x),                 \
+                           V2: add_v2,          \
+                           V3: add_v3)(x, y)    \
 
-#define sub(x, y) _Generic((x), \
-    V2: _Generic((y), \
-      V2: sub_v2) \
-    )(x, y)
+#define sub(x, y) _Generic((x),                 \
+                           V2: sub_v2,          \
+                           V3: sub_v3)(x, y)    \
 
-#define normalize(x) _Generic((x), \
-    V2: normalize_v2 \
-    )(x)
+#define normalize(x) _Generic((x),                      \
+                              V2: normalize_v2,         \
+                              V3: normalize_v3)(x)      \
 
-#define scale(x, y) _Generic((x), \
-    V2: _Generic((y), \
-      float: scale_v2) \
-    )(x, y)
+#define scale(x, y) _Generic((x),                       \
+                             V2: scale_v2,              \
+                             V3: scale_v3)(x, y)        \
 
 #endif

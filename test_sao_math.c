@@ -37,4 +37,7 @@ main(int argc, char* argv[])
 
     assert(s.x == foo.x * 2);
     assert(s.y == foo.y * 2);
+
+    add(v3(1,2,3), v3(1,2,3));
+    
 }
