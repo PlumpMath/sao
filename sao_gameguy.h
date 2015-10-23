@@ -2,20 +2,21 @@
    v1.0
 
    Gameguy is my toolset for making 3d games and game demos.
-   It is heavily based on the handmade hero engine capabilities and provides a reusable platform
-   layer that I can use to prototype and build 3d games and demos.
+   It is heavily based on the handmade hero engine capabilities and provides a reusable
+   platform layer that I can use to prototype and build 3d games and demos.
 
    To build a new project with gameguy you build a library that exports a ggGame struct.
    That struct contains a few pieces of information.
-   * The amount of memory needed for the game (All allocated at init. @TODO let this grow)
    * An update_and_render function that takes a ggGameMemory pointer and a ggGameInput pointer.
 
    Then you can run the game from the command line with ./gameguy library_name.so
 
-   Gameguy will handle setting up the window, allocating memory, recording input and calling
+   Gameguy will handle setting up the window, recording input and calling
    your update_and_render function 60 times per second. It will also reload your library when
    it is recompiled and provides many debug features you can hook into for displaying and
    exploring information about the scene.
+   You can put a pointer to your gamestate and it's size int he game memory and the platform
+   layer can use that to loop gameplay for looped live code editing. @TODO
 
    In the future there may be the ability to modify settings for many of these pieces but for now
    it's very opinionated which lets me build many different demos and experiment rapidly. It uses
@@ -45,11 +46,14 @@ typedef struct {
 } ggPlatformAPI;
 
 typedef struct {
-    uint64_t permanent_storage_size;
-    void*    permanent_storage;
+    // Use this pointer to record any memory you want the platform layer to keep track of.
+    // This memory will be saved and replayed for looped editing and debugging.
+    // Put gamestate here.
+    uint64_t persistent_storage_size;
+    void*    persistent_storage;
 
-    uint64_t transient_storage_size;
-    void*    transient_storage;
+    /* uint64_t transient_storage_size; */
+    /* void*    transient_storage; */
 
     bool executable_reloaded;
     ggPlatformAPI platform_api;
@@ -70,8 +74,8 @@ typedef struct {
 typedef void (*UpdateAndRenderFn)(ggGameMemory *memory, ggGameInput* input);
 
 typedef struct {
-    int permanent_storage_size;
-    int temp_storage_size;
+    /* int permanent_storage_size; */
+    /* int temp_storage_size; */
     UpdateAndRenderFn update_and_render;
 } ggGame;
 
@@ -217,20 +221,13 @@ main(int argc, char* argv[]) {
     }
 
     ggGameMemory game_memory = {};
+    game_memory.persistent_storage_size = 0;
+    game_memory.persistent_storage = NULL;
+    
     game_memory.dt = target_seconds_per_frame;
 
     game_memory.platform_api.get_file_size = debug_get_file_size;
     game_memory.platform_api.read_entire_file = debug_read_entire_file;
-
-    game_memory.permanent_storage_size = game.gg_game->permanent_storage_size;
-    game_memory.transient_storage_size = game.gg_game->temp_storage_size;
-
-    void* raw_memory = calloc(1,
-                              game_memory.permanent_storage_size +
-                              game_memory.transient_storage_size);
-
-    game_memory.permanent_storage = raw_memory;
-    game_memory.transient_storage = (char*)raw_memory + game_memory.permanent_storage_size;
     
     ggGameInput input = {};
 

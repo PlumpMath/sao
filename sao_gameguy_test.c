@@ -35,8 +35,15 @@ typedef struct {
 // Make a triangle spin or something. Good proof of concept.
 void
 game_update_and_render(ggGameMemory *memory, ggGameInput* input) {
-    GameState* game_state = (GameState*)memory;
-    if (!game_state->is_initialized) {
+    GameState* game_state = (GameState*)memory->persistent_storage;
+    if (!game_state) {
+        // Allocate memory to use by the game and store it's pointer and size in game memory
+        // so that the platform layer can manage it when reloading code.
+        memory->persistent_storage_size = sizeof(GameState);
+        memory->persistent_storage = calloc(1, sizeof(GameState));
+        game_state = (GameState*)memory->persistent_storage;
+
+        // Set up an opengl triangle.
         GLint program = glCreateProgram();
         GLint vert_shader = glCreateShader(GL_VERTEX_SHADER);
         GLint frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -71,6 +78,7 @@ game_update_and_render(ggGameMemory *memory, ggGameInput* input) {
         game_state->shader_program = program;
     }
 
+    // Draw opengl triangle.
     glBindVertexArray(game_state->triangle_vao);
     glUseProgram(game_state->shader_program);
     glDrawArrays(GL_TRIANGLES, 0, 9);
@@ -78,7 +86,5 @@ game_update_and_render(ggGameMemory *memory, ggGameInput* input) {
 }
 
 ggGame gg_game = {
-    .permanent_storage_size = sizeof(GameState),
-    .temp_storage_size = 0,
     .update_and_render = game_update_and_render
 };
