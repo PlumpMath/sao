@@ -1,5 +1,5 @@
 /* gameguy
-   v1.0
+   v1.1, tuning for sao_gameguy_test
 
    Gameguy is my toolset for making 3d games and game demos.
    It is heavily based on the handmade hero engine capabilities and provides a reusable
@@ -18,9 +18,10 @@
    You can put a pointer to your gamestate and it's size int he game memory and the platform
    layer can use that to loop gameplay for looped live code editing. @TODO
 
-   In the future there may be the ability to modify settings for many of these pieces but for now
-   it's very opinionated which lets me build many different demos and experiment rapidly. It uses
-   SDL for window and input handling and opengl 3.3. None of it is tested on anything but osx.
+   In the future there may be the ability to modify settings for many of these pieces but for
+   now it's very opinionated which lets me build many different demos and experiment rapidly.
+   It uses SDL for window and input handling and opengl 3.3. None of it is tested on anything
+   but osx.
 
    Future wanted features.
    - Building static releases for multiple platforms.
@@ -67,8 +68,64 @@ typedef struct {
     float drawable_height;
 } ggGameMemory;
 
+// Do I want casey style buttons.
+// half_transition_count, ended_down.
+// mouse_moved, mouse position.
+
 typedef struct {
-    
+    bool ended_down;
+    int half_transition_count;
+} ggButton;
+
+typedef struct {
+    // Mouse. (movement and clicks)
+    ggButton mouse1;
+    ggButton mouse2;
+
+    int horisontal_scroll;
+    int vertical_scroll;
+
+    float mouse_x;
+    float mouse_y;
+
+    bool mouse_moved;
+    float mouse_dx;
+    float mouse_dy;
+
+    // Buttons, used for game input situations.
+    union {
+        struct {
+            ggButton w;
+            ggButton a;
+            ggButton s;
+            ggButton d;
+            ggButton q;
+            ggButton e;
+            ggButton up;
+            ggButton down;
+            ggButton left;
+            ggButton right;
+            ggButton space;
+            ggButton ctrl;
+            ggButton shift;
+            ggButton n1;
+            ggButton n2;
+            ggButton n3;
+            ggButton n4;
+            ggButton n5;
+            ggButton n6;
+            ggButton n7;
+            ggButton n8;
+            ggButton n9;
+            ggButton n0;
+            ggButton escape;
+            ggButton ret;
+        } b;
+        ggButton e[25];
+    } button;
+
+    // Keyboard string input.
+    // @TODO
 } ggGameInput;
 
 typedef void (*UpdateAndRenderFn)(ggGameMemory *memory, ggGameInput* input);
@@ -103,7 +160,7 @@ typedef struct {
 } CurrentGame;
 
 int
-debug_get_file_size(const char* filename)
+gg_debug_get_file_size(const char* filename)
 {
     struct stat attr;
     stat(filename, &attr);
@@ -111,7 +168,7 @@ debug_get_file_size(const char* filename)
 }
 
 bool
-debug_read_entire_file(const char* filename, char* buffer, size_t buffer_size)
+gg_debug_read_entire_file(const char* filename, char* buffer, size_t buffer_size)
 {
     FILE* f = fopen(filename, "r");
     fread(buffer, 1, buffer_size-1, f);
@@ -123,7 +180,7 @@ debug_read_entire_file(const char* filename, char* buffer, size_t buffer_size)
 }
 
 bool
-game_reload(CurrentGame* current_game, const char* library)
+gg_game_reload(CurrentGame* current_game, const char* library)
 {
     bool game_reloaded = false;
     
@@ -164,6 +221,91 @@ game_reload(CurrentGame* current_game, const char* library)
     return game_reloaded;
 }
 
+// @TODO: Metaprogram this or use a hash or something.
+int
+_gg_get_button_index(SDL_Keycode sym)
+{
+    int button_index;
+    switch(sym) {
+    case(SDLK_w):
+        button_index = 0;
+        break;
+    case(SDLK_a):
+        button_index = 1;
+        break;
+    case(SDLK_s):
+        button_index = 2;
+        break;
+    case(SDLK_d):
+        button_index = 3;
+        break;
+    case(SDLK_q):
+        button_index = 4;
+        break;
+    case(SDLK_e):
+        button_index = 5;
+        break;
+    case(SDLK_UP):
+        button_index = 6;
+        break;
+    case(SDLK_DOWN):
+        button_index = 7;
+        break;
+    case(SDLK_LEFT):
+        button_index = 8;
+        break;
+    case(SDLK_RIGHT):
+        button_index = 9;
+        break;
+    case(SDLK_SPACE):
+        button_index = 10;
+        break;
+    case(SDLK_LCTRL):
+        button_index = 11;
+        break;
+    case(SDLK_LSHIFT):
+        button_index = 12;
+        break;
+    case(SDLK_1):
+        button_index = 13;
+        break;
+    case(SDLK_2):
+        button_index = 14;
+        break;
+    case(SDLK_3):
+        button_index = 15;
+        break;
+    case(SDLK_4):
+        button_index = 16;
+        break;
+    case(SDLK_5):
+        button_index = 17;
+        break;
+    case(SDLK_6):
+        button_index = 18;
+        break;
+    case(SDLK_7):
+        button_index = 19;
+        break;
+    case(SDLK_8):
+        button_index = 20;
+        break;
+    case(SDLK_9):
+        button_index = 21;
+        break;
+    case(SDLK_0):
+        button_index = 22;
+        break;
+    case(SDLK_ESCAPE):
+        button_index = 23;
+        break;
+    case(SDLK_RETURN):
+        button_index = 24;
+        break;
+    };
+    return button_index;
+}
+
 int
 main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -177,7 +319,7 @@ main(int argc, char* argv[]) {
     CurrentGame game = {.handle = NULL,
                         .id = 0,
                         .gg_game = NULL};
-    game_reload(&game, library_filename);
+    gg_game_reload(&game, library_filename);
 
     float game_update_hz = 60;
     float target_seconds_per_frame = 1.0f / game_update_hz;
@@ -226,8 +368,8 @@ main(int argc, char* argv[]) {
     
     game_memory.dt = target_seconds_per_frame;
 
-    game_memory.platform_api.get_file_size = debug_get_file_size;
-    game_memory.platform_api.read_entire_file = debug_read_entire_file;
+    game_memory.platform_api.get_file_size = gg_debug_get_file_size;
+    game_memory.platform_api.read_entire_file = gg_debug_read_entire_file;
     
     ggGameInput input = {};
 
@@ -252,7 +394,7 @@ main(int argc, char* argv[]) {
         SDL_GL_GetDrawableSize(window, &draw_w, &draw_h);
 
         // Reload Game
-        game_memory.executable_reloaded = game_reload(&game, library_filename);
+        game_memory.executable_reloaded = gg_game_reload(&game, library_filename);
         game_memory.ticks = start_time;
         game_memory.dt = dt;
         game_memory.display_width = w;
@@ -260,10 +402,9 @@ main(int argc, char* argv[]) {
         game_memory.drawable_width = draw_w;
         game_memory.drawable_height = draw_h;
 
-#if 0 // @TODO sdl input
-        // Handle SDL Events
-        for (int i=0; i<ARRAY_COUNT(input.buttons); i++) {
-            input.buttons[i].half_transition_count = 0;
+        /* Handle SDL Events */
+        for (int i=0; i<sizeof(input.button.e)/sizeof(input.button.e[0]); i++) {
+            input.button.e[i].half_transition_count = 0;
         }
 
         input.horisontal_scroll = 0;
@@ -276,138 +417,47 @@ main(int argc, char* argv[]) {
             case SDL_QUIT:
                 running = false;
                 break;
+                
             case SDL_MOUSEWHEEL:
                 input.horisontal_scroll += event.wheel.x;
                 input.vertical_scroll += event.wheel.y;
                 break;
+                
             case SDL_MOUSEBUTTONDOWN:
                 if (event.button.button == SDL_BUTTON_LEFT) {
-                    input.button.mouse_1.half_transition_count++;
-                    input.button.mouse_1.ended_down = true;
+                    input.mouse1.half_transition_count++;
+                    input.mouse1.ended_down = true;
                 }
                 break;
 
             case SDL_MOUSEBUTTONUP:
                 if (event.button.button == SDL_BUTTON_LEFT) {
-                    input.button.mouse_1.half_transition_count++;
-                    input.button.mouse_1.ended_down = false;
+                    input.mouse1.half_transition_count++;
+                    input.mouse1.ended_down = false;
                 }
                 break;
-                
-            case SDL_KEYDOWN:
+
+            case SDL_KEYDOWN: {
                 if (SDLK_ESCAPE == event.key.keysym.sym) {
                     running = false;
                 }
 
-                switch(event.key.keysym.sym) {
-                case(SDLK_LCTRL):
-                    input.button.ctrl.half_transition_count++;
-                    input.button.ctrl.ended_down = true;
-                    break;
-                case(SDLK_LSHIFT):
-                    input.button.shift.half_transition_count++;
-                    input.button.shift.ended_down = true;
-                    break;
-                case(SDLK_w):
-                    input.button.move_up.half_transition_count++;
-                    input.button.move_up.ended_down = true;
-                    break;
-                case(SDLK_a):
-                    input.button.move_left.half_transition_count++;
-                    input.button.move_left.ended_down = true;
-                    break;
-                case(SDLK_s):
-                    input.button.move_down.half_transition_count++;
-                    input.button.move_down.ended_down = true;
-                    break;
-                case(SDLK_d):
-                    input.button.move_right.half_transition_count++;
-                    input.button.move_right.ended_down = true;
-                    break;
-                case(SDLK_UP):
-                    input.button.action_up.half_transition_count++;
-                    input.button.action_up.ended_down = true;
-                    break;
-                case(SDLK_LEFT):
-                    input.button.action_left.half_transition_count++;
-                    input.button.action_left.ended_down = true;
-                    break;
-                case(SDLK_DOWN):
-                    input.button.action_down.half_transition_count++;
-                    input.button.action_down.ended_down = true;
-                    break;
-                case(SDLK_RIGHT):
-                    input.button.action_right.half_transition_count++;
-                    input.button.action_right.ended_down = true;
-                    break;
-                case(SDLK_q):
-                    input.button.left_bumper.half_transition_count++;
-                    input.button.left_bumper.ended_down = true;
-                    break;
-                case(SDLK_e):
-                    input.button.right_bumper.half_transition_count++;
-                    input.button.right_bumper.ended_down = true;
-                    break;
-                };
-                break;
+                int button_index = _gg_get_button_index(event.key.keysym.sym);
+                input.button.e[button_index].half_transition_count++;
+                input.button.e[button_index].ended_down = true;
+            } break;
+
+            case SDL_KEYUP: {
+                int button_index = _gg_get_button_index(event.key.keysym.sym);
+                input.button.e[button_index].half_transition_count++;
+                input.button.e[button_index].ended_down = false;
+            } break;
                 
-            case SDL_KEYUP:
-                switch(event.key.keysym.sym) {
-                case(SDLK_LCTRL):
-                    input.button.ctrl.half_transition_count++;
-                    input.button.ctrl.ended_down = false;
-                    break;
-                case(SDLK_LSHIFT):
-                    input.button.shift.half_transition_count++;
-                    input.button.shift.ended_down = false;
-                    break;
-                case(SDLK_w):
-                    input.button.move_up.half_transition_count++;
-                    input.button.move_up.ended_down = false;
-                    break;
-                case(SDLK_a):
-                    input.button.move_left.half_transition_count++;
-                    input.button.move_left.ended_down = false;
-                    break;
-                case(SDLK_s):
-                    input.button.move_down.half_transition_count++;
-                    input.button.move_down.ended_down = false;
-                    break;
-                case(SDLK_d):
-                    input.button.move_right.half_transition_count++;
-                    input.button.move_right.ended_down = false;
-                    break;
-                case(SDLK_UP):
-                    input.button.action_up.half_transition_count++;
-                    input.button.action_up.ended_down = false;
-                    break;
-                case(SDLK_LEFT):
-                    input.button.action_left.half_transition_count++;
-                    input.button.action_left.ended_down = false;
-                    break;
-                case(SDLK_DOWN):
-                    input.button.action_down.half_transition_count++;
-                    input.button.action_down.ended_down = false;
-                    break;
-                case(SDLK_RIGHT):
-                    input.button.action_right.half_transition_count++;
-                    input.button.action_right.ended_down = false;
-                    break;
-                case(SDLK_q):
-                    input.button.left_bumper.half_transition_count++;
-                    input.button.left_bumper.ended_down = false;
-                    break;
-                case(SDLK_e):
-                    input.button.right_bumper.half_transition_count++;
-                    input.button.right_bumper.ended_down = false;
-                    break;
-                };
-                break;
             default:
                 break;
-            }
+            };
         }
-#endif
+        
         if (running == false) {
             break;
         }
@@ -415,18 +465,21 @@ main(int argc, char* argv[]) {
         int mouse_x, mouse_y;
         SDL_GetMouseState(&mouse_x, &mouse_y);
 
-#if 0
         if (SDL_GetWindowFlags(window) & SDL_WINDOW_MOUSE_FOCUS) {
-            io.MousePos.x = (float)mouse_x;
-            io.MousePos.y = (float)mouse_y;
-        } else {
-            io.MousePos.x = -1;
-            io.MousePos.y = -1;
-        }
+            if (mouse_x != input.mouse_x ||
+                mouse_y != input.mouse_y) {
+                input.mouse_moved = true;
+                input.mouse_dx = mouse_x - input.mouse_x;
+                input.mouse_dy = mouse_y - input.mouse_y;
+                
+            }
+            input.mouse_x = mouse_x;
+            input.mouse_y = mouse_y;
 
-        io.MouseDown[0] = input.button.mouse_1.ended_down ||
-            input.button.mouse_1.half_transition_count > 1;
-#endif
+        } else {
+            input.mouse_x = -1;
+            input.mouse_y = -1;
+        }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -436,7 +489,7 @@ main(int argc, char* argv[]) {
         // End Frame        
         update_time = SDL_GetTicks() - start_time;
 
-        float time_till_vsync = target_seconds_per_frame*1000.0 - (SDL_GetTicks() - start_time);
+        float time_till_vsync = target_seconds_per_frame*1000.0 - (SDL_GetTicks()-start_time);
         if (time_till_vsync > 3) {
             SDL_Delay(time_till_vsync - 2);
         }
@@ -447,6 +500,7 @@ main(int argc, char* argv[]) {
         last_counter = end_counter;
     }
 
+    fprintf(stderr, "Closing\n");
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
     SDL_Quit();

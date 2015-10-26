@@ -3,13 +3,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define SAO_GL_IMPLEMENTATION
+#include "sao_gl.h"
+
 #include <OpenGL/gl3.h>
 
 const GLchar *vertex_shader =
     "#version 330\n"
-
     "layout (location = 0) in vec3 position;\n"
-    
     "void main()\n"
     "{\n"
     "	gl_Position = vec4(position.x, position.y, position.z, 1.0);\n"
@@ -17,9 +18,7 @@ const GLchar *vertex_shader =
 
 const GLchar* fragment_shader =
     "#version 330\n"
-
     "out vec4 color;\n"
-    
     "void main()\n"
     "{\n"
     "	color = vec4(1.0,0.0,0.0,1.0);\n"
@@ -44,18 +43,7 @@ game_update_and_render(ggGameMemory *memory, ggGameInput* input) {
         game_state = (GameState*)memory->persistent_storage;
 
         // Set up an opengl triangle.
-        GLint program = glCreateProgram();
-        GLint vert_shader = glCreateShader(GL_VERTEX_SHADER);
-        GLint frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
-
-        glShaderSource(vert_shader, 1, &vertex_shader, 0);
-        glShaderSource(frag_shader, 1, &fragment_shader, 0);
-        glCompileShader(vert_shader);
-        glCompileShader(frag_shader);
-        glAttachShader(program, vert_shader);
-        glAttachShader(program, frag_shader);
-        glLinkProgram(program);
-
+        GLint program = saogl_compile_shader_program(vertex_shader, fragment_shader);
         glUseProgram(program);
 
         float vertices[] = {
@@ -78,11 +66,16 @@ game_update_and_render(ggGameMemory *memory, ggGameInput* input) {
         game_state->shader_program = program;
     }
 
+    if (input->button.b.w.half_transition_count > 1 ||
+        (input->button.b.w.ended_down &&
+         input->button.b.w.half_transition_count == 1)) {
+        fprintf(stderr, "You pressed w\n");
+    }
+
     // Draw opengl triangle.
     glBindVertexArray(game_state->triangle_vao);
     glUseProgram(game_state->shader_program);
     glDrawArrays(GL_TRIANGLES, 0, 9);
-
 }
 
 ggGame gg_game = {
