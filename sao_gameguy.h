@@ -163,7 +163,10 @@ int
 gg_debug_get_file_size(const char* filename)
 {
     struct stat attr;
-    stat(filename, &attr);
+    if (stat(filename, &attr) == -1) {
+        fprintf(stderr, "Error reading file size: %s\n", filename);
+        return -1;
+    };
     return attr.st_size+1;
 }
 
@@ -334,8 +337,8 @@ main(int argc, char* argv[]) {
         fprintf(stderr, "Error initializing SDL: %s\ns", SDL_GetError());
     }
     
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
 

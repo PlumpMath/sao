@@ -12,6 +12,15 @@
 int saogl_compile_shader_program(const char* vertex_shader_src, const char* fragment_shader_src);
 // Returns an opengl shader program or 0 on error. Writes any errors to stderr.
 
+typedef int (*saogl_GetFileSizeFn)(const char* filename);
+typedef bool (*saogl_ReadEntireFileFn)(const char* filename, char* buffer, size_t buffer_size);
+
+int
+saogl_build_shader_from_files(saogl_GetFileSizeFn get_file_size,
+                              saogl_ReadEntireFileFn read_file,
+                              const char* vertex_shader_filename,
+                              const char* fragment_shader_filename);
+
 #endif
 
 #ifdef SAO_GL_IMPLEMENTATION
@@ -70,7 +79,7 @@ saogl_compile_shader_program(const char* vertex_shader_src, const char* fragment
     glCompileShader(vert_shader);
     if (_saogl_check_shader_error(vert_shader)) {
         glDeleteShader(vert_shader);
-        return 1;
+        return -1;
     }
 
     GLint frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -79,7 +88,7 @@ saogl_compile_shader_program(const char* vertex_shader_src, const char* fragment
     if (_saogl_check_shader_error(frag_shader)) {
         glDeleteShader(vert_shader);
         glDeleteShader(frag_shader);
-        return 1;
+        return -1;
     }
 
     GLint program = glCreateProgram();
@@ -90,7 +99,7 @@ saogl_compile_shader_program(const char* vertex_shader_src, const char* fragment
         glDeleteShader(vert_shader);
         glDeleteShader(frag_shader);
         glDeleteProgram(program);
-        return 1;
+        return -1;
     }
 
     glDeleteShader(vert_shader);
@@ -98,4 +107,38 @@ saogl_compile_shader_program(const char* vertex_shader_src, const char* fragment
     return program;
 }
 
+
+int
+saogl_build_shader_from_files(saogl_GetFileSizeFn get_file_size,
+                              saogl_ReadEntireFileFn read_file,
+                              const char* vertex_shader_filename,
+                              const char* fragment_shader_filename)
+{
+    // Load shaders.
+    int vert_shader_size = get_file_size(vertex_shader_filename);
+    if (vert_shader_size < 0) {
+        fprintf(stderr, "Error: couldn't read vertex shader file\n");
+        return -1;
+    }
+    char* vert_buf = malloc(vert_shader_size);
+    read_file(vertex_shader_filename, vert_buf, vert_shader_size);
+    /* fprintf(stderr, "Vertex Shader: %s", vert_buf); */
+
+    int frag_shader_size = get_file_size(fragment_shader_filename);
+    if (frag_shader_size < 0) {
+        fprintf(stderr, "Error: couldn't read fragment shader file\n");
+        return -1;
+    }
+    char* frag_buf = malloc(frag_shader_size);
+    read_file(fragment_shader_filename, frag_buf, frag_shader_size);
+    /* fprintf(stderr, "Fragment Shader: %s", frag_buf); */
+
+    GLint shader = saogl_compile_shader_program(vert_buf, frag_buf);
+    if (shader < 0) {
+        fprintf(stderr, "Error: Couldn't compile shaders\n");
+        return -1;
+    }
+
+    return shader;
+}
 #endif
