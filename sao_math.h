@@ -195,6 +195,20 @@ cross(V3 a, V3 b)
     return result;
 }
 
+static inline V3
+spherical_to_cartesian(V3 spherical_coordinate)
+{
+    float r = spherical_coordinate.r;
+    float theta = spherical_coordinate.theta;
+    float phi = spherical_coordinate.phi;
+
+    V3 result = v3(r*sin(theta)*cos(phi),
+                   r*sin(theta)*sin(phi),
+                   r*cos(theta));
+
+    return result;
+}
+
 // V4
 inline V4
 v4(float x, float y, float z, float w) {

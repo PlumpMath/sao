@@ -1,5 +1,5 @@
 /* gameguy
-   v1.1, tuning for sao_gameguy_test
+   v2.0, changes for gouplabs
 
    Gameguy is my toolset for making 3d games and game demos.
    It is heavily based on the handmade hero engine capabilities and provides a reusable
@@ -163,7 +163,10 @@ int
 gg_debug_get_file_size(const char* filename)
 {
     struct stat attr;
-    stat(filename, &attr);
+    if (stat(filename, &attr) == -1) {
+        fprintf(stderr, "Error reading file size: %s\n", filename);
+        return -1;
+    };
     return attr.st_size+1;
 }
 
@@ -308,18 +311,23 @@ _gg_get_button_index(SDL_Keycode sym)
 
 int
 main(int argc, char* argv[]) {
+#ifndef SAO_GAMEGUY_STATIC_LINK
+    #ifndef SAO_GAMEGUY_LIBRARY_NAME
     if (argc != 2) {
         fprintf(stderr, "Error: must specify library filename.\n");
         exit(1);
     }
-    
     const char* library_filename = argv[1];
+    #else
+    const char* library_filename = SAO_GAMEGUY_LIBRARY_NAME;
+    #endif
     fprintf(stderr, "Loading Library: %s\n", library_filename);
-    
+
     CurrentGame game = {.handle = NULL,
                         .id = 0,
                         .gg_game = NULL};
     gg_game_reload(&game, library_filename);
+#endif
 
     float game_update_hz = 60;
     float target_seconds_per_frame = 1.0f / game_update_hz;
@@ -329,8 +337,8 @@ main(int argc, char* argv[]) {
         fprintf(stderr, "Error initializing SDL: %s\ns", SDL_GetError());
     }
     
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
                         SDL_GL_CONTEXT_PROFILE_CORE);
 
@@ -338,7 +346,13 @@ main(int argc, char* argv[]) {
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
-    SDL_Window *window = SDL_CreateWindow("gameguy",
+    #ifdef SAO_GAMEGUY_WINDOW_NAME
+    char* window_name = SAO_GAMEGUY_WINDOW_NAME;
+    #else
+    char* window_name = "gameguy";
+    #endif
+
+    SDL_Window *window = SDL_CreateWindow(window_name,
                                           SDL_WINDOWPOS_CENTERED,
                                           SDL_WINDOWPOS_CENTERED,
                                           1920,
@@ -394,7 +408,9 @@ main(int argc, char* argv[]) {
         SDL_GL_GetDrawableSize(window, &draw_w, &draw_h);
 
         // Reload Game
+#ifndef SAO_GAMEGUY_STATIC_LINK
         game_memory.executable_reloaded = gg_game_reload(&game, library_filename);
+#endif
         game_memory.ticks = start_time;
         game_memory.dt = dt;
         game_memory.display_width = w;
@@ -484,7 +500,11 @@ main(int argc, char* argv[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Run Game Tick
+        #ifdef SAO_GAMEGUY_STATIC_LINK
+        gg_game.update_and_render(&game_memory, &input);
+        #else
         game.gg_game->update_and_render(&game_memory, &input);
+        #endif
         
         // End Frame        
         update_time = SDL_GetTicks() - start_time;
